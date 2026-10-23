@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Víveres Emmanuel - Gestión</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex h-screen font-sans">
+
+    <!-- Sidebar Completo -->
+    <aside class="w-64 bg-white shadow-md flex flex-col border-r">
+        <div class="p-6 font-bold text-lg text-gray-800">Rutas Emmanuel</div>
+        <nav class="flex-1 px-4 space-y-2">
+            <button id="nav-tiendas" class="w-full text-left block py-2 px-4 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">Tiendas</button>
+            <button id="nav-transportes" class="w-full text-left block py-2 px-4 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">Transportes</button>
+            <button id="nav-planificar" class="w-full text-left block py-2 px-4 bg-emerald-700 text-white rounded-md font-medium transition-colors">Planificar jornada</button>
+            <button id="nav-ruta" class="w-full text-left block py-2 px-4 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">Ruta generada</button>
+            <button id="nav-comparacion" class="w-full text-left block py-2 px-4 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">Comparación</button>
+        </nav>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-1 p-8 overflow-hidden bg-gray-50 flex flex-col relative">
+        
+        <!-- ================= VISTA TIENDAS ================= -->
+        <section id="seccion-tiendas" class="flex-1 flex flex-col h-full hidden">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Gestión de tiendas</h1>
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex-1 flex flex-col">
+                <div class="flex justify-between mb-4">
+                    <input type="text" id="buscador-tiendas" placeholder="Buscar tienda o dirección..." class="border border-gray-300 rounded-md px-4 py-2 w-1/2 focus:outline-none focus:border-emerald-600">
+                    <button id="btn-nueva-tienda" class="bg-emerald-700 text-white px-4 py-2 rounded-md hover:bg-emerald-800 font-medium transition-colors">Nueva tienda</button>
+                </div>
+                <div class="flex-1 overflow-y-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-gray-500 text-sm border-b border-gray-200">
+                                <th class="pb-3 font-medium">Nombre comercial</th>
+                                <th class="pb-3 font-medium">Dirección</th>
+                                <th class="pb-3 font-medium text-center">Acciones / Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-tiendas" class="text-gray-700"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VISTA TRANSPORTES ================= -->
+        <section id="seccion-transportes" class="flex-1 flex flex-col h-full hidden">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Gestión de Transportes</h1>
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex-1 flex flex-col">
+                <div class="flex justify-between mb-4">
+                    <input type="text" id="buscador-vehiculos" placeholder="Buscar por placa o modelo..." class="border border-gray-300 rounded-md px-4 py-2 w-1/2 focus:outline-none focus:border-emerald-600">
+                    <button id="btn-nuevo-vehiculo" class="bg-emerald-700 text-white px-4 py-2 rounded-md hover:bg-emerald-800 font-medium transition-colors">Nuevo Transporte</button>
+                </div>
+                <div class="flex-1 overflow-y-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-gray-500 text-sm border-b border-gray-200">
+                                <th class="pb-3 font-medium">Placa</th>
+                                <th class="pb-3 font-medium">Modelo</th>
+                                <th class="pb-3 font-medium text-center">Acciones / Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-vehiculos" class="text-gray-700"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VISTA PLANIFICAR JORNADA ================= -->
+        <section id="seccion-planificar" class="flex-1 flex flex-col h-full">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Planificar jornada</h1>
+            <div class="flex gap-6 h-full">
+                <!-- Columna Izquierda: Lista de Tiendas -->
+                <div class="flex-1 bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col">
+                    <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-4">
+                        <h2 class="text-lg font-bold text-gray-800">Tiendas de la jornada</h2>
+                        <span id="contador-seleccionadas" class="text-sm text-emerald-700 font-bold bg-emerald-50 px-3 py-1 rounded-full">0 de 0 seleccionadas</span>
+                    </div>
+                    <div id="lista-tiendas-checkbox" class="flex-1 overflow-y-auto space-y-3">
+                        <!-- Se llena con JS -->
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Configuración -->
+                <div class="w-80 flex flex-col gap-4">
+                    <!-- Tarjeta Jornada -->
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                        <h3 class="font-bold text-gray-700 mb-3">Jornada</h3>
+                        <label class="block text-sm text-gray-500 mb-1">Fecha</label>
+                        <input type="date" id="fecha-jornada" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-emerald-600">
+                    </div>
+
+                    <!-- Tarjeta Vehículo -->
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                        <h3 class="font-bold text-gray-700 mb-3">Vehículo</h3>
+                        <div id="info-vehiculo" class="text-sm text-gray-600">
+                            <!-- Se llena con JS -->
+                            Cargando vehículo...
+                        </div>
+                    </div>
+
+                    <!-- Tarjeta Depósito -->
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                        <h3 class="font-bold text-gray-700 mb-3">Depósito (origen y regreso)</h3>
+                        <p class="text-sm text-gray-600">Bodega de Viveres Emmanuel</p>
+                    </div>
+
+                    <!-- Botón Generar -->
+                    <button id="btn-generar-ruta" class="w-full bg-emerald-700 text-white py-3 rounded-md hover:bg-emerald-800 font-bold transition-colors shadow-md mt-auto">
+                        Generar ruta de menor distancia
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VISTA RUTA GENERADA (En construcción) ================= -->
+        <section id="seccion-ruta" class="flex-1 flex flex-col h-full hidden">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Ruta generada</h1>
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex-1 flex flex-col items-center justify-center text-center">
+                <svg class="w-20 h-20 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                <h2 class="text-xl font-semibold text-gray-600 mb-2">Módulo en construcción</h2>
+                <p class="text-gray-400">Aquí se visualizará el mapa de Cúcuta y la ruta optimizada (Google Maps API).</p>
+            </div>
+        </section>
+
+        <!-- ================= VISTA COMPARACIÓN (En construcción) ================= -->
+        <section id="seccion-comparacion" class="flex-1 flex flex-col h-full hidden">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Comparación manual vs. plataforma</h1>
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex-1 flex flex-col items-center justify-center text-center">
+                <svg class="w-20 h-20 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                <h2 class="text-xl font-semibold text-gray-600 mb-2">Módulo en construcción</h2>
+                <p class="text-gray-400">Aquí se mostrará el porcentaje de reducción de distancia (Sprint 4).</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL TIENDAS -->
+    <div id="modal-tienda" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
+            <button id="btn-cerrar-x" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+            <h2 id="form-titulo" class="text-xl font-bold text-gray-800 mb-6">Nueva tienda</h2>
+            <form id="form-tienda" class="space-y-4">
+                <input type="hidden" id="tienda-id">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Nombre comercial</label>
+                    <input type="text" id="nombre" required class="w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Dirección</label>
+                    <input type="text" id="direccion" required class="w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-sm text-gray-600 mb-1">Latitud</label><input type="number" step="any" id="latitud" required class="w-full border border-gray-300 rounded-md px-3 py-2"></div>
+                    <div><label class="block text-sm text-gray-600 mb-1">Longitud</label><input type="number" step="any" id="longitud" required class="w-full border border-gray-300 rounded-md px-3 py-2"></div>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Barrio</label>
+                    <input type="text" id="barrio" required class="w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                <div class="flex gap-4 mt-6">
+                    <button type="button" id="btn-cancelar" class="w-1/2 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 font-medium transition-colors">Salir</button>
+                    <button type="submit" id="btn-submit-form" class="w-1/2 bg-emerald-700 text-white py-2 rounded-md hover:bg-emerald-800 font-medium transition-colors">Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL TRANSPORTES -->
+    <div id="modal-vehiculo" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
+            <button id="btn-cerrar-x-vehiculo" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+            <h2 id="form-titulo-vehiculo" class="text-xl font-bold text-gray-800 mb-6">Nuevo Transporte</h2>
+            <form id="form-vehiculo" class="space-y-4">
+                <input type="hidden" id="vehiculo-id">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Placa</label>
+                    <input type="text" id="placa" required class="w-full border border-gray-300 rounded-md px-3 py-2 uppercase" placeholder="ABC-123">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Modelo</label>
+                    <input type="text" id="modelo" required class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="Ej. Renault Kangoo">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Tipo</label>
+                    <input type="text" id="tipo" required class="w-full border border-gray-300 rounded-md px-3 py-2" value="Vehículo de carga liviana">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Estado Operativo</label>
+                    <select id="estado-vehiculo" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        <option value="Activo">Activo</option>
+                        <option value="En Mantenimiento">En Mantenimiento</option>
+                        <option value="Inactivo">Inactivo</option>
+                    </select>
+                </div>
+                <div class="flex gap-4 mt-6">
+                    <button type="button" id="btn-cancelar-vehiculo" class="w-1/2 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 font-medium transition-colors">Salir</button>
+                    <button type="submit" id="btn-submit-vehiculo" class="w-1/2 bg-emerald-700 text-white py-2 rounded-md hover:bg-emerald-800 font-medium transition-colors">Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="./controllers/tiendaController.js"></script>
+    <script type="module" src="./controllers/vehiculoController.js"></script>
+    <script type="module" src="./controllers/planificarController.js"></script>
+    
+    <!-- Lógica de navegación -->
+    <script>
+        const botonesNav = {
+            tiendas: document.getElementById('nav-tiendas'),
+            transportes: document.getElementById('nav-transportes'),
+            planificar: document.getElementById('nav-planificar'),
+            ruta: document.getElementById('nav-ruta'),
+            comparacion: document.getElementById('nav-comparacion')
+        };
+
+        const secciones = {
+            tiendas: document.getElementById('seccion-tiendas'),
+            transportes: document.getElementById('seccion-transportes'),
+            planificar: document.getElementById('seccion-planificar'),
+            ruta: document.getElementById('seccion-ruta'),
+            comparacion: document.getElementById('seccion-comparacion')
+        };
+
+        function cambiarSeccion(seccionActiva) {
+            Object.values(secciones).forEach(sec => sec.classList.add('hidden'));
+            Object.values(botonesNav).forEach(btn => {
+                btn.className = "w-full text-left block py-2 px-4 text-gray-600 hover:bg-gray-100 rounded-md transition-colors";
+            });
+            secciones[seccionActiva].classList.remove('hidden');
+            botonesNav[seccionActiva].className = "w-full text-left block py-2 px-4 bg-emerald-700 text-white rounded-md font-medium transition-colors";
+            
+            // Si entramos a planificar, recargamos los datos por si agregaron tiendas nuevas
+            if(seccionActiva === 'planificar' && window.cargarDatosPlanificar) {
+                window.cargarDatosPlanificar();
+            }
+        }
+
+        botonesNav.tiendas.addEventListener('click', () => cambiarSeccion('tiendas'));
+        botonesNav.transportes.addEventListener('click', () => cambiarSeccion('transportes'));
+        botonesNav.planificar.addEventListener('click', () => cambiarSeccion('planificar'));
+        botonesNav.ruta.addEventListener('click', () => cambiarSeccion('ruta'));
+        botonesNav.comparacion.addEventListener('click', () => cambiarSeccion('comparacion'));
+    </script>
+</body>
+</html>
