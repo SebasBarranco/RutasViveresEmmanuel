@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Víveres Emmanuel - Gestión de Rutas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 👇 API KEY REAL YA CONFIGURADA 👇 -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHotGBi-rWmuLlimGMs4IPnE3aHczQFuo&libraries=places"></script>
+    <style>
+        #hoja-ruta { display: none; }
+        @media print {
+            body > aside, main, #modal-tienda, #modal-vehiculo { display: none !important; }
+            body { display: block !important; background: #fff !important; height: auto !important; }
+            #hoja-ruta { display: block !important; padding: 24px; font-family: sans-serif; color: #000; }
+            #hoja-ruta table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+            #hoja-ruta th, #hoja-ruta td { border: 1px solid #999; padding: 6px 8px; text-align: left; font-size: 13px; }
+        }
+    
+        /* ---- Permisos por rol (la seguridad real la aplican las políticas RLS en Supabase) ---- */
+        /* admin: todo excepto "Mi ruta". trabajador: únicamente "Mi ruta". */
+        body[data-rol="admin"] #nav-miruta, body[data-rol="admin"] #seccion-miruta { display: none !important; }
+        body[data-rol="trabajador"] #nav-tiendas, body[data-rol="trabajador"] #nav-transportes, body[data-rol="trabajador"] #nav-planificar,
+        body[data-rol="trabajador"] #nav-ruta, body[data-rol="trabajador"] #nav-comparacion, body[data-rol="trabajador"] #nav-usuarios { display: none !important; }
+    </style>
+</head>
+<body class="bg-gray-100 flex h-screen font-sans overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white shadow-md flex flex-col border-r z-10">
+        <div class="p-6 font-bold text-lg text-gray-800">Rutas Emmanuel</div>
+        <nav class="flex-1 px-4 space-y-2">
+            <button id="nav-tiendas" class="w-full text-left block py-2 px-4 bg-emerald-700 text-white rounded-md font-medium transition-colors">Tiendas</button>
+            <button id="nav-transportes" class="w-full text-left block py-2 px-4 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">Transportes</button>
+            <button id="nav-planificar" class="w-full text-left block py-2 px-4 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">Planificar jornada</button>
+            <button id="nav-ruta" class="w-full text-left block py-2 px-4 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">Ruta generada</button>
+            <button id="nav-comparacion" class="w-full text-left block py-2 px-4 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">Comparación</button>
+            <button id="nav-miruta" class="w-full text-left block py-2 px-4 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">Mi ruta</button>
+            <button id="nav-usuarios" class="w-full text-left block py-2 px-4 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">Usuarios</button>
+        </nav>
+        <div class="p-4 border-t text-sm">
+            <p id="sesion-nombre" class="font-medium text-gray-800 truncate"></p>
+            <p id="sesion-rol" class="text-xs uppercase tracking-wider text-emerald-700 font-bold mb-2"></p>
+            <button id="btn-cerrar-sesion" class="w-full bg-gray-200 text-gray-700 py-1.5 rounded-md hover:bg-gray-300 font-medium transition-colors">Cerrar sesión</button>
+        </div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-1 p-8 overflow-hidden bg-gray-50 flex flex-col relative">
+        
+        <!-- ================= VISTA TIENDAS ================= -->
+        <section id="seccion-tiendas" class="flex-1 flex flex-col h-full">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Gestión de tiendas</h1>
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex-1 flex flex-col">
+                <div class="flex justify-between mb-4">
+                    <input type="text" id="buscador-tiendas" placeholder="Buscar tienda o dirección..." class="border border-gray-300 rounded-md px-4 py-2 w-1/2 focus:outline-none focus:border-emerald-600">
+                    <button id="btn-nueva-tienda" class="bg-emerald-700 text-white px-4 py-2 rounded-md hover:bg-emerald-800 font-medium transition-colors">Nueva tienda</button>
+                </div>
+                <div class="flex-1 overflow-y-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-gray-500 text-sm border-b border-gray-200">
+                                <th class="pb-3 font-medium">Nombre comercial</th>
+                                <th class="pb-3 font-medium">Dirección</th>
+                                <th class="pb-3 font-medium text-center">Acciones / Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-tiendas" class="text-gray-700"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VISTA TRANSPORTES ================= -->
+        <section id="seccion-transportes" class="flex-1 flex flex-col h-full hidden">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Gestión de Transportes</h1>
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex-1 flex flex-col">
+                <div class="flex justify-between mb-4">
+                    <input type="text" id="buscador-vehiculos" placeholder="Buscar por placa o modelo..." class="border border-gray-300 rounded-md px-4 py-2 w-1/2 focus:outline-none focus:border-emerald-600">
+                    <button id="btn-nuevo-vehiculo" class="bg-emerald-700 text-white px-4 py-2 rounded-md hover:bg-emerald-800 font-medium transition-colors">Nuevo Transporte</button>
+                </div>
+                <div class="flex-1 overflow-y-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-gray-500 text-sm border-b border-gray-200">
+                                <th class="pb-3 font-medium">Placa</th>
+                                <th class="pb-3 font-medium">Modelo</th>
+                                <th class="pb-3 font-medium text-center">Acciones / Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-vehiculos" class="text-gray-700"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VISTA PLANIFICAR JORNADA ================= -->
+        <section id="seccion-planificar" class="flex-1 flex-col h-full hidden">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Planificar jornada</h1>
+            <div class="flex gap-6 h-full overflow-hidden">
+                <div class="flex-1 bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col">
+                    <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-4">
+                        <h2 class="text-lg font-bold text-gray-800">Tiendas de la jornada</h2>
+                        <span id="contador-seleccionadas" class="text-sm text-emerald-700 font-bold bg-emerald-50 px-3 py-1 rounded-full">0 de 0 seleccionadas</span>
+                    </div>
+                    <div id="lista-tiendas-checkbox" class="flex-1 overflow-y-auto space-y-3"></div>
+                </div>
+                <div class="w-80 flex flex-col gap-4">
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                        <h3 class="font-bold text-gray-700 mb-3">Jornada</h3>
+                        <label class="block text-sm text-gray-500 mb-1">Fecha</label>
+                        <input type="date" id="fecha-jornada" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-emerald-600">
+                    </div>
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                        <h3 class="font-bold text-gray-700 mb-3">Vehículo</h3>
+                        <div id="info-vehiculo" class="text-sm text-gray-600">Cargando vehículo...</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                        <h3 class="font-bold text-gray-700 mb-3">Depósito (origen y regreso)</h3>
+                        <p class="text-sm text-gray-600">Bodega de Viveres Emmanuel</p>
+                    </div>
+                    <button id="btn-generar-ruta" class="w-full bg-emerald-700 text-white py-3 rounded-md hover:bg-emerald-800 font-bold transition-colors shadow-md mt-auto">
+                        Generar ruta de menor distancia
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VISTA RUTA GENERADA ================= -->
+        <section id="seccion-ruta" class="flex-1 flex-col h-full hidden">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Ruta generada</h1>
+            <div class="flex gap-6 h-full">
+                <div class="flex-1 bg-white p-2 rounded-lg shadow-sm border border-gray-200">
+                    <div id="mapa-ruta" class="w-full h-full rounded-md bg-gray-200 flex items-center justify-center text-gray-400">
+                        El mapa se cargará cuando generes una ruta.
+                    </div>
+                </div>
+                <div class="w-80 bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col">
+                    <h2 class="text-lg font-bold text-gray-800 mb-4">Resumen de la Ruta</h2>
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-500">Distancia total</p>
+                        <p id="distancia-total" class="text-3xl font-bold text-emerald-600">0 km</p>
+                    </div>
+                    <h3 class="font-medium text-gray-700 mb-1">Secuencia de visita:</h3>
+                    <p class="text-xs text-gray-400 mb-2">Usa ▲ ▼ para cambiar el orden y pulsa "Aplicar nuevo orden".</p>
+                    <ul id="lista-secuencia" class="space-y-2 overflow-y-auto flex-1 text-sm text-gray-600 mb-4"></ul>
+                    
+                    <!-- BOTÓN PARA GUARDAR EN HISTORIAL -->
+                    <button id="btn-guardar-ruta" class="mb-2 w-full bg-emerald-700 text-white py-2 rounded-md hover:bg-emerald-800 font-medium transition-colors">Guardar y enviar al trabajador</button>
+                    <button id="btn-recalcular" class="mb-2 w-full bg-white border border-emerald-700 text-emerald-700 py-2 rounded-md hover:bg-emerald-50 font-medium transition-colors hidden">Aplicar nuevo orden</button>
+                    <button id="btn-imprimir-ruta" class="w-full bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 font-medium transition-colors">Imprimir Hoja de Ruta</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VISTA COMPARACIÓN ================= -->
+        <section id="seccion-comparacion" class="flex-1 flex-col h-full hidden">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Comparación manual vs. plataforma</h1>
+            
+            <div class="flex gap-4 mb-6">
+                <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 flex-1">
+                    <p class="text-sm text-gray-500 mb-1">Reducción media de distancia</p>
+                    <p id="reduccion-media" class="text-3xl font-bold text-emerald-600">0%</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex-1 flex flex-col">
+                <div class="flex-1 overflow-y-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-gray-500 text-sm border-b border-gray-200">
+                                <th class="pb-3 font-medium">Jornada</th>
+                                <th class="pb-3 font-medium">Km Ruta Plataforma</th>
+                                <th class="pb-3 font-medium">Km Ruta Manual (Ingresar)</th>
+                                <th class="pb-3 font-medium">Reducción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-comparacion" class="text-gray-700"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VISTA MI RUTA (trabajador) ================= -->
+        <section id="seccion-miruta" class="flex-1 flex-col h-full hidden">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Mi ruta de hoy</h1>
+            <div id="miruta-vacio" class="hidden bg-white p-10 rounded-lg shadow-sm border border-gray-200 text-center text-gray-500">
+                Aún no hay una ruta asignada. Cuando el administrador publique una, aparecerá aquí.
+            </div>
+            <div id="miruta-contenido" class="flex gap-6 h-full">
+                <div class="flex-1 bg-white p-2 rounded-lg shadow-sm border border-gray-200">
+                    <div id="mapa-miruta" class="w-full h-full rounded-md bg-gray-200"></div>
+                </div>
+                <div class="w-80 bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col">
+                    <p id="miruta-fecha" class="text-sm text-gray-500"></p>
+                    <p id="miruta-vehiculo" class="text-sm text-gray-500 mb-3"></p>
+                    <p class="text-sm text-gray-500">Distancia total</p>
+                    <p id="miruta-km" class="text-3xl font-bold text-emerald-600 mb-4">0 km</p>
+                    <h3 class="font-medium text-gray-700 mb-2">Secuencia de visita:</h3>
+                    <ul id="miruta-lista" class="space-y-2 overflow-y-auto flex-1 text-sm text-gray-600 mb-4"></ul>
+                    <button id="btn-imprimir-miruta" class="w-full bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 font-medium transition-colors">Imprimir Hoja de Ruta</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VISTA USUARIOS (solo admin) ================= -->
+        <section id="seccion-usuarios" class="flex-1 flex-col h-full hidden">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Gestión de usuarios</h1>
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex-1 flex flex-col">
+                <p class="text-sm text-gray-500 mb-4">Quien se registra entra como <b>trabajador</b>. Aquí puedes dar el rol <b>admin</b> a quien corresponda.</p>
+                <div class="flex-1 overflow-y-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead><tr class="text-gray-500 text-sm border-b border-gray-200">
+                            <th class="pb-3 font-medium">Nombre</th><th class="pb-3 font-medium">Correo</th><th class="pb-3 font-medium">Rol</th>
+                        </tr></thead>
+                        <tbody id="tabla-usuarios" class="text-gray-700"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- PANTALLA DE INICIO DE SESIÓN -->
+    <div id="pantalla-login" class="fixed inset-0 bg-gray-100 z-[100] flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-8">
+            <h1 class="text-2xl font-bold text-gray-800 mb-1">Rutas Emmanuel</h1>
+            <p id="login-subtitulo" class="text-sm text-gray-500 mb-6">Inicia sesión para continuar</p>
+            <form id="form-login" class="space-y-4">
+                <div id="campo-nombre" class="hidden">
+                    <label class="block text-sm text-gray-600 mb-1">Nombre completo</label>
+                    <input type="text" id="login-nombre" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-emerald-600">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Correo</label>
+                    <input type="email" id="login-email" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-emerald-600">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Contraseña</label>
+                    <input type="password" id="login-password" required minlength="6" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-emerald-600">
+                </div>
+                <p id="login-error" class="text-sm text-red-600 hidden"></p>
+                <button type="submit" id="btn-login" class="w-full bg-emerald-700 text-white py-2 rounded-md hover:bg-emerald-800 font-medium transition-colors">Iniciar sesión</button>
+                <button type="button" id="btn-alternar-registro" class="w-full text-sm text-emerald-700 hover:underline">¿No tienes cuenta? Regístrate</button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- HOJA DE RUTA (solo se muestra al imprimir) -->
+    <div id="hoja-ruta"></div>
+
+    <!-- MODAL TIENDAS -->
+    <div id="modal-tienda" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative max-h-[90vh] overflow-y-auto">
+            <button id="btn-cerrar-x" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+            <h2 id="form-titulo" class="text-xl font-bold text-gray-800 mb-6">Nueva tienda</h2>
+            <form id="form-tienda" class="space-y-4">
+                <input type="hidden" id="tienda-id">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Nombre comercial</label>
+                    <input type="text" id="nombre" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-emerald-600">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">Propietario</label>
+                        <input type="text" id="propietario" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-emerald-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">Teléfono</label>
+                        <input type="tel" id="telefono" required pattern="[0-9+ ]{7,15}" title="Solo números (7 a 15 dígitos)" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-emerald-600">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Dirección</label>
+                    <input type="text" id="direccion" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-emerald-600">
+                </div>
+                
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Ubicación en el mapa (Haz clic para marcar)</label>
+                    <div id="mapa-selector" class="w-full h-48 rounded-md border border-gray-300 bg-gray-100"></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">Latitud</label>
+                        <input type="number" step="any" id="latitud" required class="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50 focus:outline-none focus:border-emerald-600" readonly placeholder="Clic en el mapa">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">Longitud</label>
+                        <input type="number" step="any" id="longitud" required class="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50 focus:outline-none focus:border-emerald-600" readonly placeholder="Clic en el mapa">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Barrio</label>
+                    <input type="text" id="barrio" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-emerald-600">
+                </div>
+                <div class="flex gap-4 mt-6">
+                    <button type="button" id="btn-cancelar" class="w-1/2 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 font-medium transition-colors">Salir</button>
+                    <button type="submit" id="btn-submit-form" class="w-1/2 bg-emerald-700 text-white py-2 rounded-md hover:bg-emerald-800 font-medium transition-colors">Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL TRANSPORTES -->
+    <div id="modal-vehiculo" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
+            <button id="btn-cerrar-x-vehiculo" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+            <h2 id="form-titulo-vehiculo" class="text-xl font-bold text-gray-800 mb-6">Nuevo Transporte</h2>
+            <form id="form-vehiculo" class="space-y-4">
+                <input type="hidden" id="vehiculo-id">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Placa</label>
+                    <input type="text" id="placa" required class="w-full border border-gray-300 rounded-md px-3 py-2 uppercase focus:outline-none focus:border-emerald-600" placeholder="ABC-123">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Modelo</label>
+                    <input type="text" id="modelo" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-emerald-600" placeholder="Ej. Renault Kangoo">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Tipo</label>
+                    <input type="text" id="tipo" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-emerald-600" value="Vehículo de carga liviana">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Estado Operativo</label>
+                    <select id="estado-vehiculo" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-emerald-600">
+                        <option value="Activo">Activo</option>
+                        <option value="En Mantenimiento">En Mantenimiento</option>
+                        <option value="Inactivo">Inactivo</option>
+                    </select>
+                </div>
+                <div class="flex gap-4 mt-6">
+                    <button type="button" id="btn-cancelar-vehiculo" class="w-1/2 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 font-medium transition-colors">Salir</button>
+                    <button type="submit" id="btn-submit-vehiculo" class="w-1/2 bg-emerald-700 text-white py-2 rounded-md hover:bg-emerald-800 font-medium transition-colors">Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script type="module" src="./controllers/authController.js"></script>
+    <script type="module" src="./controllers/tiendaController.js"></script>
+    <script type="module" src="./controllers/vehiculoController.js"></script>
+    <script type="module" src="./controllers/planificarController.js"></script>
+    <script type="module" src="./controllers/rutaController.js"></script>
+    <script type="module" src="./controllers/miRutaController.js"></script>
+    <script type="module" src="./controllers/comparacionController.js"></script>
+    
+    <!-- Lógica de Navegación -->
+    <script>
+        const botonesNav = {
+            tiendas: document.getElementById('nav-tiendas'), transportes: document.getElementById('nav-transportes'),
+            planificar: document.getElementById('nav-planificar'), ruta: document.getElementById('nav-ruta'), comparacion: document.getElementById('nav-comparacion'), usuarios: document.getElementById('nav-usuarios'), miruta: document.getElementById('nav-miruta')
+        };
+        const secciones = {
+            tiendas: document.getElementById('seccion-tiendas'), transportes: document.getElementById('seccion-transportes'),
+            planificar: document.getElementById('seccion-planificar'), ruta: document.getElementById('seccion-ruta'), comparacion: document.getElementById('seccion-comparacion'), usuarios: document.getElementById('seccion-usuarios'), miruta: document.getElementById('seccion-miruta')
+        };
+
+        function cambiarSeccion(seccionActiva) {
+            Object.values(secciones).forEach(sec => { sec.classList.add('hidden'); sec.classList.remove('flex'); });
+            Object.values(botonesNav).forEach(btn => { btn.className = "w-full text-left block py-2 px-4 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"; });
+            secciones[seccionActiva].classList.remove('hidden');
+            secciones[seccionActiva].classList.add('flex');
+            botonesNav[seccionActiva].className = "w-full text-left block py-2 px-4 bg-emerald-700 text-white rounded-md font-medium transition-colors";
+            
+            if(seccionActiva === 'planificar' && window.cargarDatosPlanificar) window.cargarDatosPlanificar();
+            if(seccionActiva === 'ruta' && window.inicializarMapaRuta) window.inicializarMapaRuta();
+            if(seccionActiva === 'comparacion' && window.cargarComparacion) window.cargarComparacion();
+            if(seccionActiva === 'miruta' && window.cargarMiRuta) window.cargarMiRuta();
+            if(seccionActiva === 'usuarios' && window.cargarUsuarios) window.cargarUsuarios();
+        }
+
+        botonesNav.tiendas.addEventListener('click', () => cambiarSeccion('tiendas'));
+        botonesNav.transportes.addEventListener('click', () => cambiarSeccion('transportes'));
+        botonesNav.planificar.addEventListener('click', () => cambiarSeccion('planificar'));
+        botonesNav.ruta.addEventListener('click', () => cambiarSeccion('ruta'));
+        botonesNav.comparacion.addEventListener('click', () => cambiarSeccion('comparacion'));
+        botonesNav.usuarios.addEventListener('click', () => cambiarSeccion('usuarios'));
+        botonesNav.miruta.addEventListener('click', () => cambiarSeccion('miruta'));
+        window.cambiarSeccion = cambiarSeccion;
+    </script>
+</body>
+</html>
