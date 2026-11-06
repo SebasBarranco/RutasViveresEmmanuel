@@ -1,5 +1,6 @@
 import { VehiculoModel } from '../models/vehiculoModel.js';
 import { VehiculosView } from '../views/vehiculosView.js';
+import { validarPlaca } from '../utils/validaciones.js';
 
 let vehiculosGlobal = []; 
 
@@ -19,6 +20,7 @@ VehiculosView.formVehiculo.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = VehiculosView.inputId.value;
     const datos = VehiculosView.obtenerDatosFormulario();
+    if (!validarPlaca(datos.placa)) return alert('⚠️ La placa debe tener el formato ABC-123.');
 
     try {
         if (id) {

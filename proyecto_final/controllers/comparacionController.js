@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase.js';
+import { calcularReduccion } from '../utils/comparacion.js';
 
 const tablaComparacion = document.getElementById('tabla-comparacion');
 
@@ -23,8 +24,8 @@ window.cargarComparacion = async () => {
             const kmManual = ruta.distancia_manual;
             
             let reduccionHTML = '<span class="text-gray-400">-</span>';
-            if (kmManual > 0) {
-                const reduccion = ((kmManual - kmPlataforma) / kmManual) * 100;
+            const reduccion = calcularReduccion(kmManual, kmPlataforma);
+            if (reduccion !== null) {
                 reduccionHTML = `<span class="text-emerald-600 font-bold">${reduccion.toFixed(1)}%</span>`;
                 sumaReduccion += reduccion;
                 rutasConManual++;

@@ -1,5 +1,7 @@
 import { TiendaModel } from '../models/tiendaModel.js';
 import { TiendasView } from '../views/tiendasView.js';
+import { filtrarTiendas } from '../utils/busqueda.js';
+import { validarTelefono, validarCoordenadas } from '../utils/validaciones.js';
 
 let tiendasGlobal = []; 
 
@@ -19,6 +21,8 @@ TiendasView.formTienda.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = TiendasView.inputId.value;
     const datosTienda = TiendasView.obtenerDatosFormulario();
+    if (!validarTelefono(datosTienda.telefono)) return alert('⚠️ El teléfono debe tener entre 7 y 15 dígitos.');
+    if (!validarCoordenadas(datosTienda.latitud, datosTienda.longitud)) return alert('⚠️ Marca la ubicación de la tienda en el mapa.');
 
     try {
         if (id) {
@@ -44,14 +48,7 @@ document.getElementById('btn-nueva-tienda').addEventListener('click', () => {
 });
 
 TiendasView.buscador.addEventListener('input', (e) => {
-    const termino = e.target.value.toLowerCase();
-    const filtradas = tiendasGlobal.filter(t => 
-        t.nombre_comercial.toLowerCase().includes(termino) || 
-        t.direccion.toLowerCase().includes(termino) ||
-        t.barrio.toLowerCase().includes(termino) ||
-        (t.propietario || '').toLowerCase().includes(termino) ||
-        (t.telefono || '').toLowerCase().includes(termino)
-    );
+    const filtradas = filtrarTiendas(tiendasGlobal, e.target.value);
     TiendasView.renderizarTabla(filtradas);
     asignarEventosBotones();
 });

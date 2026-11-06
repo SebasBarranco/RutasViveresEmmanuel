@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase.js';
+import { validarEmail, validarPassword } from '../utils/validaciones.js';
 
 const $ = (id) => document.getElementById(id);
 let modoRegistro = false;
@@ -25,6 +26,8 @@ $('form-login').addEventListener('submit', async (e) => {
     mostrarError('');
     const email = $('login-email').value.trim();
     const password = $('login-password').value;
+    if (!validarEmail(email)) return mostrarError('Escribe un correo válido.');
+    if (!validarPassword(password)) return mostrarError('La contraseña debe tener al menos 6 caracteres.');
     $('btn-login').disabled = true;
     try {
         if (modoRegistro) {

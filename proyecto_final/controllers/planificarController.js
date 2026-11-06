@@ -1,6 +1,7 @@
 import { TiendaModel } from '../models/tiendaModel.js';
 import { VehiculoModel } from '../models/vehiculoModel.js';
 import { PlanificarView } from '../views/planificarView.js';
+import { validarSeleccionTiendas } from '../utils/validaciones.js';
 
 // Exponemos esta función globalmente para que el index.html pueda llamarla al cambiar de pestaña
 window.cargarDatosPlanificar = async function() {
@@ -41,7 +42,7 @@ window.cargarDatosPlanificar = async function() {
 PlanificarView.btnGenerar.addEventListener('click', () => {
     const tiendasSeleccionadas = PlanificarView.obtenerTiendasSeleccionadas();
     
-    if (tiendasSeleccionadas.length < 2) {
+    if (!validarSeleccionTiendas(tiendasSeleccionadas)) {
         alert("⚠️ Debes seleccionar al menos 2 tiendas para generar una ruta.");
         return;
     }
