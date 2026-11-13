@@ -1,0 +1,79 @@
+[
+ {
+  "paradas": 5,
+  "metodo": "Exacto (Held-Karp)",
+  "medianaMs": 0,
+  "kmRuta": 31.48,
+  "heapMB": 5
+ },
+ {
+  "paradas": 8,
+  "metodo": "Exacto (Held-Karp)",
+  "medianaMs": 0.5,
+  "kmRuta": 35.05,
+  "heapMB": 5
+ },
+ {
+  "paradas": 10,
+  "metodo": "Exacto (Held-Karp)",
+  "medianaMs": 1,
+  "kmRuta": 35.68,
+  "heapMB": 5
+ },
+ {
+  "paradas": 12,
+  "metodo": "Exacto (Held-Karp)",
+  "medianaMs": 8.2,
+  "kmRuta": 37.91,
+  "heapMB": 9
+ },
+ {
+  "paradas": 13,
+  "metodo": "Heurístico (vecino más cercano + 2-opt)",
+  "medianaMs": 0.1,
+  "kmRuta": 47.41,
+  "heapMB": 10
+ },
+ {
+  "paradas": 20,
+  "metodo": "Heurístico (vecino más cercano + 2-opt)",
+  "medianaMs": 0.3,
+  "kmRuta": 51.28,
+  "heapMB": 11
+ },
+ {
+  "paradas": 45,
+  "metodo": "Heurístico (vecino más cercano + 2-opt)",
+  "medianaMs": 2.3,
+  "kmRuta": 71.99,
+  "heapMB": 9
+ },
+ {
+  "paradas": 100,
+  "metodo": "Heurístico (vecino más cercano + 2-opt)",
+  "medianaMs": 1.5,
+  "kmRuta": 106.27,
+  "heapMB": 11
+ },
+ {
+  "paradas": 200,
+  "metodo": "Heurístico (vecino más cercano + 2-opt)",
+  "medianaMs": 6.7,
+  "kmRuta": 138.68,
+  "heapMB": 9
+ },
+ {
+  "paradas": 500,
+  "metodo": "Heurístico (vecino más cercano + 2-opt)",
+  "medianaMs": 166.5,
+  "kmRuta": 221.28,
+  "heapMB": 16
+ },
+ {
+  "paradas": 1000,
+  "metodo": "Heurístico (vecino más cercano + 2-opt)",
+  "medianaMs": 803.8,
+  "kmRuta": 305.53,
+  "heapMB": 41
+ }
+]

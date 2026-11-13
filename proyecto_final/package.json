@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --import ./test/helpers/registrar.mjs --test test/unitarias.test.js test/integracion.test.js"
+    "test": "node --import ./test/helpers/registrar.mjs --test test/unitarias.test.js test/integracion.test.js test/seguridad.test.js"
   }
 }

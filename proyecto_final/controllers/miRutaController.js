@@ -1,3 +1,4 @@
+import { escaparHtml } from '../utils/seguridad.js';
 import { supabase } from '../config/supabase.js';
 
 const $ = (id) => document.getElementById(id);
@@ -32,7 +33,7 @@ window.cargarMiRuta = async () => {
         const li = document.createElement('li');
         li.className = 'flex items-start py-2 border-b border-gray-100';
         li.innerHTML = `<span class="font-bold text-emerald-600 mr-3 w-6">${esB ? 'B' : i}.</span>
-            <div><p class="font-medium text-gray-800">${p.nombre}</p><p class="text-xs text-gray-500">${esB ? (i === 0 ? 'Salida' : 'Regreso') : (p.direccion || '')}${p.barrio ? ' · ' + p.barrio : ''}</p></div>`;
+            <div><p class="font-medium text-gray-800">${escaparHtml(p.nombre)}</p><p class="text-xs text-gray-500">${esB ? (i === 0 ? 'Salida' : 'Regreso') : escaparHtml(p.direccion)}${p.barrio ? ' · ' + escaparHtml(p.barrio) : ''}</p></div>`;
         ul.appendChild(li);
     });
 
@@ -66,10 +67,10 @@ window.cargarMiRuta = async () => {
 
     // Hoja de ruta para imprimir
     const filas = puntos.slice(1, -1).map((p, i) =>
-        `<tr><td>${i + 1}</td><td>${p.nombre}</td><td>${p.direccion || ''}</td><td>${p.barrio || ''}</td></tr>`).join('');
+        `<tr><td>${i + 1}</td><td>${escaparHtml(p.nombre)}</td><td>${escaparHtml(p.direccion)}</td><td>${escaparHtml(p.barrio)}</td></tr>`).join('');
     $('hoja-ruta').innerHTML = `
         <h1 style="font-size:22px;font-weight:bold">Hoja de ruta de despacho — Víveres Emmanuel</h1>
-        <p style="margin-top:8px"><b>Fecha:</b> ${r.fecha || ''} &nbsp; <b>Vehículo:</b> ${vehiculo}</p>
+        <p style="margin-top:8px"><b>Fecha:</b> ${escaparHtml(r.fecha)} &nbsp; <b>Vehículo:</b> ${escaparHtml(vehiculo)}</p>
         <p><b>Salida y regreso:</b> ${puntos[0].nombre} &nbsp; <b>Paradas:</b> ${puntos.length - 2} &nbsp; <b>Distancia total:</b> ${Number(r.distancia_plataforma).toFixed(2)} km</p>
         <table><thead><tr><th>#</th><th>Tienda</th><th>Dirección</th><th>Barrio</th></tr></thead><tbody>${filas}</tbody></table>`;
 };

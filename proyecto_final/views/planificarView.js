@@ -1,3 +1,4 @@
+import { escaparHtml } from '../utils/seguridad.js';
 export const PlanificarView = {
     listaTiendas: document.getElementById('lista-tiendas-checkbox'),
     contadorSeleccionadas: document.getElementById('contador-seleccionadas'),
@@ -22,11 +23,11 @@ export const PlanificarView = {
                 <label class="flex items-center space-x-3 cursor-pointer w-full">
                     <input type="checkbox" class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 checkbox-tienda" value="${tienda.id}">
                     <div>
-                        <p class="font-medium text-gray-800">${tienda.nombre_comercial}</p>
-                        <p class="text-xs text-gray-500">${tienda.barrio}</p>
+                        <p class="font-medium text-gray-800">${escaparHtml(tienda.nombre_comercial)}</p>
+                        <p class="text-xs text-gray-500">${escaparHtml(tienda.barrio)}</p>
                     </div>
                 </label>
-                <span class="text-xs text-gray-400">${tienda.direccion}</span>
+                <span class="text-xs text-gray-400">${escaparHtml(tienda.direccion)}</span>
             `;
             this.listaTiendas.appendChild(div);
         });
@@ -37,8 +38,8 @@ export const PlanificarView = {
     renderizarVehiculo(vehiculo) {
         if (vehiculo) {
             this.infoVehiculo.innerHTML = `
-                <p class="font-medium text-gray-800">${vehiculo.tipo}</p>
-                <p class="text-xs text-gray-500">Placa: ${vehiculo.placa} - <span class="text-emerald-600 font-bold">${vehiculo.estado}</span></p>
+                <p class="font-medium text-gray-800">${escaparHtml(vehiculo.tipo)}</p>
+                <p class="text-xs text-gray-500">Placa: ${escaparHtml(vehiculo.placa)} - <span class="text-emerald-600 font-bold">${escaparHtml(vehiculo.estado)}</span></p>
             `;
         } else {
             this.infoVehiculo.innerHTML = `<p class="text-red-500 font-medium">No hay vehículo activo</p><p class="text-xs text-gray-500">Registra uno en el módulo Transportes.</p>`;

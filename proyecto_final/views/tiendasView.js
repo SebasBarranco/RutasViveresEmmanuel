@@ -1,3 +1,4 @@
+import { escaparHtml } from '../utils/seguridad.js';
 let mapaSelector;
 let marcadorSelector;
 
@@ -27,7 +28,7 @@ export const TiendasView = {
             
             const switchHTML = `
                 <div class="flex items-center justify-end space-x-3 ml-4">
-                    <span class="text-xs uppercase tracking-wider ${colorEstado} w-16 text-right">${tienda.estado}</span>
+                    <span class="text-xs uppercase tracking-wider ${colorEstado} w-16 text-right">${escaparHtml(tienda.estado)}</span>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" class="sr-only peer btn-estado" data-id="${tienda.id}" ${tienda.estado === 'activo' ? 'checked' : ''}>
                         <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
@@ -36,8 +37,8 @@ export const TiendasView = {
             `;
 
             tr.innerHTML = `
-                <td class="py-3 ${opacidad}">${tienda.nombre_comercial}<p class="text-xs text-gray-400">${[tienda.propietario, tienda.telefono].filter(Boolean).join(' · ')}</p></td>
-                <td class="py-3 ${opacidad}">${tienda.direccion}</td>
+                <td class="py-3 ${opacidad}">${escaparHtml(tienda.nombre_comercial)}<p class="text-xs text-gray-400">${escaparHtml([tienda.propietario, tienda.telefono].filter(Boolean).join(' · '))}</p></td>
+                <td class="py-3 ${opacidad}">${escaparHtml(tienda.direccion)}</td>
                 <td class="py-3 flex items-center justify-between">
                     <div class="flex items-center space-x-1">
                         <button class="text-emerald-600 hover:text-emerald-800 transition-colors p-1.5 rounded-md hover:bg-emerald-50 btn-editar" data-id="${tienda.id}" title="Editar tienda">

@@ -1,3 +1,4 @@
+import { escaparHtml } from '../utils/seguridad.js';
 import { supabase } from '../config/supabase.js';
 import { validarEmail, validarPassword } from '../utils/validaciones.js';
 
@@ -94,8 +95,8 @@ window.cargarUsuarios = async () => {
         tr.className = 'border-b border-gray-100';
         const propio = perfil && u.id === perfil.id;
         tr.innerHTML = `
-            <td class="py-3">${u.nombre || '—'}</td>
-            <td class="py-3 text-gray-500">${u.email || ''}</td>
+            <td class="py-3">${escaparHtml(u.nombre || '—')}</td>
+            <td class="py-3 text-gray-500">${escaparHtml(u.email)}</td>
             <td class="py-3"><select class="border border-gray-300 rounded-md px-2 py-1" ${propio ? 'disabled title="No puedes cambiar tu propio rol"' : ''}>
                 ${['admin', 'trabajador'].map(r => `<option value="${r}" ${u.rol === r ? 'selected' : ''}>${r}</option>`).join('')}
             </select></td>`;
